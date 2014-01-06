@@ -9,30 +9,57 @@ import sys
 import os
 import optparse
 
-try:
-    os.environ['DISPLAY']
-    import pygtk
-    import gtk
-except:
+if not 'DISPLAY' in os.environ:
     print("Error: DISPLAY environment varible not set.")
     sys.exit(1)
+import gtk
 
-# Classifion Banner Class
-class Classification_Banner:
-    """Class to create and refresh the actual banner."""
+# Create a set of predefined profiles for known classification levels
+class Profiles:
+    """A collection of settings for pre-defined classification levels.
 
-    def __init__(self, message="UNCLASSIFIED", fgcolor="#000000",
-        bgcolor="#00CC00", face="liberation-sans", size="small",
-        weight="bold"):
-        """Set up and display the main window
-
-        Keyword arguments:
+    Each profile is a dictionary containing the following keys:
         message -- The classification level to display
         fgcolor -- Foreground color of the text to display
         bgcolor -- Background color of the banner the text is against
         face    -- Font face to use for the displayed text
         size    -- Size of font to use for text
         weight  -- Bold or normal
+    """
+
+    U = { "face":"liberation-sans", "size":"small", "weight":"bold",
+        "message":"UNCLASSIFIED", "fgcolor":"#000000", "bgcolor":"#00CC00"}
+    C = { "face":"liberation-sans", "size":"small", "weight":"bold",
+        "message":"CONFIDENTIAL", "fgcolor":"#000000", "bgcolor":"#33FFFF"}
+    S = { "face":"liberation-sans", "size":"small", "weight":"bold",
+        "message":"SECRET", "fgcolor":"#FFFFFF", "bgcolor":"#FF0000"}
+    TS = { "face":"liberation-sans", "size":"small", "weight":"bold",
+        "message":"TOP SECRET", "fgcolor":"#FFFFFF", "bgcolor":"#FF9900"}
+    TS_SCI = { "face":"liberation-sans", "size":"small", "weight":"bold",
+        "message":"TOP SECRET//SCI", "fgcolor":"#000000", "bgcolor":"#FFFF00"}
+
+all_profiles = {
+    'U':Profiles.U, 'UNCLASSIFIED':Profiles.U,
+    'C':Profiles.C, 'CONFIDENTIAL':Profiles.C,
+    'S':Profiles.S, 'SECRET':Profiles.S,
+    'TS':Profiles.TS, 'TOP_SECRET':Profiles.TS,
+    'TS_SCI':Profiles.TS_SCI, 'TOP_SECRET_SCI':Profiles.TS_SCI}
+
+
+# Classifion Banner Class
+class Classification_Banner:
+    """Class to create and refresh the actual banner."""
+
+    def __init__(self, message, fgcolor, bgcolor, face, size, weight):
+        """Set up and display the main window
+
+        Keyword arguments:
+            message -- The classification level to display
+            fgcolor -- Foreground color of the text to display
+            bgcolor -- Background color of the banner the text is against
+            face    -- Font face to use for the displayed text
+            size    -- Size of font to use for text
+            weight  -- Bold or normal
         """
 
         # Create Main Window
@@ -83,60 +110,58 @@ class Display_Banner:
 
     def __init__(self):
 
-        # First read the global configuration
-        config = {}
-        try:
-            execfile("/etc/classification-banner", config)
-        except:
-            pass
-        defaults = {}
-        defaults["message"] = config.get("message", "UNCLASSIFIED")
-        defaults["fgcolor"] = config.get("fgcolor", "#000000")
-        defaults["bgcolor"] = config.get("bgcolor", "#00CC00")
-        defaults["face"] = config.get("face", "liberation-sans")
-        defaults["size"] = config.get("size", "small")
-        defaults["weight"] = config.get("weight", "bold")
-        defaults["show_top"] = config.get("show_top", True)
-        defaults["show_bottom"] = config.get("show_bottom", True)
-
-        # Use the global config to set defaults for command line options
+        # Read configuration from command line options
         parser = optparse.OptionParser()
-        parser.add_option("-m", "--message", default=defaults["message"],
-            help="Classification message")
-        parser.add_option("-f", "--fgcolor", default=defaults["fgcolor"],
-            help="Foreground (text) color")
-        parser.add_option("-b", "--bgcolor", default=defaults["bgcolor"],
-            help="Background color")
-        parser.add_option("--face", default=defaults["face"], help="Font face")
-        parser.add_option("--size", default=defaults["size"], help="Font size")
-        parser.add_option("--weight", default=defaults["weight"],
-            help="Font weight")
-        parser.add_option("--hide-top", default=defaults["show_top"],
+        parser.add_option("-p", "--profile",
+            choices=all_profiles.keys(),
+            help="Predefined profile. Valid values are U, C, S, TS, and TS_SCI. Note: additional options override profile settings")
+        parser.add_option("-m", "--message", help="Classification message")
+        parser.add_option("-f", "--fgcolor", help="Foreground (text) color")
+        parser.add_option("-b", "--bgcolor", help="Background color")
+        parser.add_option("--face", help="Font face")
+        parser.add_option("--size", help="Font size")
+        parser.add_option("--weight", help="Font weight")
+        parser.add_option("--hide-top", default=True,
             dest="show_top", action="store_false",
             help="Disable the top banner")
-        parser.add_option("--hide-bottom", default=defaults["show_bottom"],
+        parser.add_option("--hide-bottom", default=True,
             dest="show_bottom", action="store_false",
             help="Disable the bottom banner")
 
         options, args = parser.parse_args()
 
-        if options.show_top:
-            self.top = Classification_Banner(
-                options.message,
-                options.fgcolor,
-                options.bgcolor,
-                options.face,
-                options.size,
-                options.weight)
+        # Load the default configuration
+        try:
+            config = {}
+            execfile("/etc/classification-banner", config)
+        except:
+            config = {}
+            pass
+
+        # Initialize based on a default profile
+        default_profile = 'U'
+        if 'profile' in config:
+            default_profile = config['profile']
+        if options.profile is not None:
+            default_profile = options.profile
+        cur_profile = all_profiles[default_profile]
+
+        # Override profile settings using the global configuration file
+        for k, v in config.items():
+            if v is not None and k not in ['profile','show_top','show_bottom']:
+                cur_profile[k] = v
+
+        # Override profile settings using additional command line parameters
+        for k, v in options.__dict__.items():
+            if v is not None and k not in ['profile','show_top','show_bottom']:
+                cur_profile[k] = v
+
+        # Do what we came here to do
+        if config.get('show_top', options.show_top):
+            self.top = Classification_Banner(**cur_profile)
             self.top.window.move(0, 0)
-        if options.show_bottom:
-            self.bottom = Classification_Banner(
-                options.message,
-                options.fgcolor,
-                options.bgcolor,
-                options.face,
-                options.size,
-                options.weight)
+        if config.get('show_bottom', options.show_bottom):
+            self.bottom = Classification_Banner(**cur_profile)
             self.bottom.window.move(0, self.bottom.vres)
 
 # Main Program Loop
