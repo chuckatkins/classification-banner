@@ -13,44 +13,67 @@ such as GNOME2, GNOME3, KDE, twm, icewm, and Cinnamon.
 Classification Banner Usage
 ===========================
 
-Options should be placed in the '/etc/classification-banner' file.
+Options should be placed in the '/etc/classification-banner' file or passed on
+the command line, with command line options overriding the system config file
+options.
 
- message      - The classification level to display (Default: 'UNCLASSIFIED')
- fgcolor      - Foreground color of the text to display (Default: '#00CC00' "Green")
- bgcolor      - Background color of the banner the text is against (Default: '#000000' "Black")
- face         - Font face to use for the displayed text (Default: 'liberation-sans')
- size         - Size of font to use for text (Default: 'small')
- weight       - Bold or normal (Defualt: 'bold')
- show_top     - Show top banner (Defualt: True)
- show_bottom  - Show bottom banner (Default: True)
+Available options:
+    profile      - The pre-defined profile of settings to use
+                   (Default: 'UNCLASSIFIED')
+    show_top     - Show top banner (Defualt: True)
+    show_bottom  - Show bottom banner (Default: True)
 
-Examples
-========
+Note: The following options have default values according the specified profile
+    message      - The classification level to display
+    fgcolor      - Foreground color of the text to display
+    bgcolor      - Background color of the banner the text is against
+    face         - Font face to use for the displayed text
+    size         - Size of font to use for text
+    weight       - Bold or normal
 
-These are examples for the configuration of the Classification Banner
-using the '/etc/classification-banner' file for various classifications
-based upon generally accepted color guidelines in the DoD/IC.
+Available Profiles
+==================
+These are the available predefined profiles for the configuration of the
+Classification Banner based upon generally accepted color guidelines in the
+DoD/IC.  All settings can be overridden in the '/etc/classification-banner' and
+with command line options, which in turn override the config file.
 
-    Default (UNCLASSIFIED)
-        
-    CONFIDENTIAL
-    
-        message='CONFIDENTIAL'
-        bgcolor='#33FFFF'
-    
-    SECRET
-        
-        message='SECRET'
-        fgcolor='#FFFFFF'
-        bgcolor='#FF0000'
-    
-    TOP SECRET
-        
-        message='TOP SECRET'
-        fgcolor='#FFFFFF'
-        bgcolor='#FF9900'
-        
-    TOP SECRET//SCI
-        
-        message='TOP SECRET//SCI'
-        bgcolor='#FFFF00'
+    'U' or 'UNCLASSIFIED'
+        face    : "liberation-sans"
+        size    : "small"
+        weight  : "bold"
+        message : "UNCLASSIFIED"
+        fgcolor : "#000000" (black)
+        bgcolor : "#00CC00" (green)
+
+    'C' or 'CONFIDENTIAL'
+        face    : "liberation-sans"
+        size    : "small"
+        weight  : "bold"
+        message : "CONFIDENTIAL"
+        fgcolor : "#000000" (black)
+        bgcolor : "#33FFFF" (cyan)
+
+    'S' or 'SECRET'
+        face    : "liberation-sans"
+        size    : "small"
+        weight  : "bold"
+        message : "SECRET"
+        fgcolor : "#FFFFFF" (white)
+        bgcolor : "#FF0000" (red)
+
+    'TS' or 'TOP_SECRET'
+        face    : "liberation-sans"
+        size    : "small"
+        weight  : "bold"
+        message : "TOP SECRET"
+        fgcolor : "#FFFFFF" (white)
+        bgcolor : "#FF9900" (orange)
+
+    'TS_SCI' or 'TOP_SECRET_SCI'
+        face    : "liberation-sans"
+        size    : "small"
+        weight  : "bold"
+        message : "TOP SECRET//SCI"
+        fgcolor : "#000000" (black)
+        bgcolor : "#FFFF00" (yellow)
